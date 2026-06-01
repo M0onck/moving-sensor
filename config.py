@@ -35,6 +35,7 @@ UPS_I2C_ADDR = int(os.getenv("Y2H_UPS_ADDR", 0x42))
 # 3. 摄像头与视频流配置
 # ==========================================
 CAMERA_INDEX = int(os.getenv("Y2H_CAMERA_INDEX", 0))    # 默认接第一个USB或CSI相机
+CAMERA_ENABLED = os.getenv("Y2H_CAMERA_ENABLED", "True").lower() == "true" # 允许关闭摄像头采集以优化性能
 VIDEO_WIDTH = int(os.getenv("Y2H_VIDEO_WIDTH", 640))
 VIDEO_HEIGHT = int(os.getenv("Y2H_VIDEO_HEIGHT", 480))
 VIDEO_FPS = int(os.getenv("Y2H_VIDEO_FPS", 20))
@@ -52,12 +53,19 @@ PM25_CAL_B = float(os.getenv("Y2H_PM25_CAL_B", 0.0))
 # ==========================================
 # 5. 云端服务器通信配置 (新架构核心)
 # ==========================================
-CLOUD_SERVER_IP = os.getenv("Y2H_CLOUD_IP", "123.45.67.89")  # 替换为你的固定IP服务器
-CLOUD_SERVER_PORT = int(os.getenv("Y2H_CLOUD_PORT", 8080))
+CLOUD_SERVER_IP = os.getenv("Y2H_CLOUD_IP", "118.195.188.229")  # 替换为你的固定IP服务器
+CLOUD_SERVER_PORT = int(os.getenv("Y2H_CLOUD_PORT", 8000))
 CLOUD_UPLOAD_INTERVAL = float(os.getenv("Y2H_UPLOAD_INTERVAL", 2.0)) # 推流到云端的间隔(秒)
 CLOUD_UPLOAD_ENABLED = os.getenv("Y2H_CLOUD_ENABLE", "True").lower() == "true"
 
 # ==========================================
-# 6. 第三方服务配置
+# 6. 本地大屏 UI 开关 (核心防崩溃策略)
 # ==========================================
-BAIDU_MAP_AK = os.getenv("Y2H_BAIDU_AK", "百度地图AK密钥")
+# 如果你是通过普通远程终端(SSH)无显式屏幕运行程序，请务必将此值设为 False
+LIVE_WINDOW_ENABLED = os.getenv("Y2H_LIVE_WINDOW", "False").lower() == "true"
+
+# ==========================================
+# 7. 第三方服务配置
+# ==========================================
+BAIDU_MAP_AK = os.getenv("Y2H_BAIDU_AK", "cjefPeFvlo8Cv68BCpYA2b3vn1EM8tNm")
+BAIDU_SERVER_AK = os.getenv("Y2H_BAIDU_SERVER_AK", "1tW0leiAIZ79V7NrkLigvMAqpRUtwt2U")
