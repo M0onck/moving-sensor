@@ -109,6 +109,34 @@ class CloudUploader:
                 # 保持原队列不动，退出，留待下一个循环周期重试
                 break
 
+    def _prepare_payload(self, raw_data: dict) -> dict:
+        """数据适配器：将本地 DataHub 字段转换为云端 FastAPI 协议字段"""
+        return {
+            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "pm25": raw_data.get("pm25", 0),
+            "pm10": raw_data.get("pm10", 0),
+            "latitude": raw_data.get("lat", 0.0),      # 映射: lat -> latitude
+            "longitude": raw_data.get("lon", 0.0),     # 映射: lon -> longitude
+            "speed": raw_data.get("speed_kmh", 0.0),
+            "temp": raw_data.get("temp", 0.0),
+            "rh": raw_data.get("rh", 0.0),
+            "voc": raw_data.get("voc", 0),
+            "co2": raw_data.get("co2", 0),
+            "device_id": self.device_id
+        }
+
+    def _flush_queue(self):
+        """修改后的排空逻辑"""
+        while self.backlog_queue and not self.stop_event.is_set():
+            payload = self.backlog_queue[0]
+            # 在发送前先转换协议
+            mapped_payload = self._prepare_payload(payload)
+            success = self._send_http_post(mapped_payload)
+            if success:
+                self.backlog_queue.popleft()
+            else:
+                break
+
     def _send_http_post(self, payload: dict) -> bool:
         """
         利用纯 Python 原生 urllib 发起高性能 POST 报文提交，不给树莓派增加第三方库依赖负担

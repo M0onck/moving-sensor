@@ -19,6 +19,7 @@ from hardware.sensor import SensorWorker
 from hardware.gps import GPSWorker
 from hardware.camera import CameraWorker
 from network.uploader import CloudUploader
+from hardware.device_status import DeviceStatusWorker
 
 # 全局日志格式配置
 logging.basicConfig(
@@ -72,7 +73,8 @@ class Y2HSystem:
         workers = {
             "Sensor-Worker": SensorWorker(self.data_hub, self.stop_event),
             "GPS-Worker": GPSWorker(self.data_hub, self.stop_event),
-            "Storage-Worker": DataStorageWorker(self.data_hub, self.stop_event)
+            "Storage-Worker": DataStorageWorker(self.data_hub, self.stop_event),
+            "Status-Worker": DeviceStatusWorker(self.data_hub, self.stop_event)
         }
         
         # 视配置状态拉起摄像头子线程

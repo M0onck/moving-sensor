@@ -37,6 +37,8 @@ class DataHub:
             
             # 4. 设备状态与系统监控
             "battery_pct": 100.0,
+            "battery_voltage_v": 0.0,
+            "power_status": "未知",
             "cpu_temp": 0.0,
             "disk_free_gb": 0.0,
             "is_recording": False       # 摄像头是否正在录制
