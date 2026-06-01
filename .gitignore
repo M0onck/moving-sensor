@@ -1,0 +1,11 @@
+# 忽略 Python 缓存
+__pycache__/
+*.pyc
+
+# 忽略本地生成的环境数据和视频流文件
+*.csv
+*.mp4
+*.avi
+
+# 忽略系统文件
+.DS_Store
