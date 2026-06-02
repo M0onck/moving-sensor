@@ -27,9 +27,9 @@ class DataHub:
             "co2": 0.0,
             "sensor_status": "WAITING", # WAITING, ACTIVE, ERROR
             
-            # 3. GPS 定位与运动数据
-            "lat": 0.000000,
-            "lon": 0.000000,
+            # 3. GPS 定位与运动数据 (默认值修改为南京市中心，防止 0.0 被云端过滤)
+            "lat": 32.060255,
+            "lon": 118.796877,
             "speed_kmh": 0.0,
             "altitude": 0.0,
             "satellites": 0,
