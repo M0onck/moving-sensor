@@ -28,6 +28,10 @@ logging.basicConfig(
     handlers=[logging.StreamHandler(sys.stdout)]
 )
 
+# 默认开启图形界面，但如果系统检测到环境变量 Y2H_LIVE_WINDOW 为 False，则关闭
+env_gui = os.environ.get("Y2H_LIVE_WINDOW", "True")
+LIVE_WINDOW_ENABLED = (env_gui == "True")
+
 class Y2HSystem:
     def __init__(self):
         # 初始化全局线程停止信号（当事件 set 时，所有子线程必须安全退出循环）
