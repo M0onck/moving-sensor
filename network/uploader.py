@@ -33,14 +33,9 @@ class CloudUploader:
         while not self.stop_event.is_set():
             loop_start = time.time()
             try:
-                # 1. 抓取快照
                 snapshot = self.data_hub.get_snapshot()
-                
-                # 2. 精准映射（一步到位，绝不嵌套）
                 payload = self._prepare_payload(snapshot)
                 self.backlog_queue.append(payload)
-                
-                # 3. 排空上传
                 self._flush_queue()
                 
             except Exception as e:
@@ -60,8 +55,16 @@ class CloudUploader:
         except (ValueError, TypeError):
             return default
 
+    # 【新增】整型数据安全转换，用于卫星数和定位质量
+    def _to_int(self, val, default=0):
+        if val is None or val == "-":
+            return default
+        try:
+            return int(float(val))
+        except (ValueError, TypeError):
+            return default
+
     def _prepare_payload(self, raw_data: dict) -> dict:
-        """数据适配器：将本地 DataHub 字段完美转换为云端 FastAPI 协议字段"""
         timestamp = raw_data.get("time_str")
         if not timestamp or timestamp == "-":
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -70,18 +73,20 @@ class CloudUploader:
             "timestamp": timestamp,
             "pm25": self._to_float(raw_data.get("pm25")),
             "pm10": self._to_float(raw_data.get("pm10")),
-            "latitude": self._to_float(raw_data.get("lat"), 32.060255),  # 默认南京中心
-            "longitude": self._to_float(raw_data.get("lon"), 118.796877), # 默认南京中心
+            "latitude": self._to_float(raw_data.get("lat"), 32.060255),
+            "longitude": self._to_float(raw_data.get("lon"), 118.796877),
             "speed": self._to_float(raw_data.get("speed_kmh")),
             "temp": self._to_float(raw_data.get("temp")),
             "rh": self._to_float(raw_data.get("rh")),
             "voc": self._to_float(raw_data.get("voc")),
             "co2": self._to_float(raw_data.get("co2")),
+            # 【新增】推流 GPS 底层监控数据
+            "satellites": self._to_int(raw_data.get("satellites")),
+            "fix_quality": self._to_int(raw_data.get("fix_quality")),
             "device_id": self.device_id
         }
 
     def _flush_queue(self):
-        """排空待发缓冲区并提交"""
         while self.backlog_queue and not self.stop_event.is_set():
             payload = self.backlog_queue[0]
             success = self._send_http_post(payload)
@@ -91,7 +96,6 @@ class CloudUploader:
                 break
 
     def _send_http_post(self, payload: dict) -> bool:
-        """利用纯 Python 原生 urllib 发起高性能 POST 报文提交"""
         try:
             data_bytes = json.dumps(payload).encode("utf-8")
             req = urllib.request.Request(
