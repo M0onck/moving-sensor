@@ -55,7 +55,7 @@ class CloudUploader:
         except (ValueError, TypeError):
             return default
 
-    # 【新增】整型数据安全转换，用于卫星数和定位质量
+    # 整型数据安全转换，用于卫星数和定位质量
     def _to_int(self, val, default=0):
         if val is None or val == "-":
             return default
@@ -80,9 +80,11 @@ class CloudUploader:
             "rh": self._to_float(raw_data.get("rh")),
             "voc": self._to_float(raw_data.get("voc")),
             "co2": self._to_float(raw_data.get("co2")),
-            # 【新增】推流 GPS 底层监控数据
             "satellites": self._to_int(raw_data.get("satellites")),
             "fix_quality": self._to_int(raw_data.get("fix_quality")),
+            "gps_state": raw_data.get("gps_state", "locating"),
+            "hdop": self._to_float(raw_data.get("hdop"), 99.9),
+            "snr": self._to_float(raw_data.get("snr"), 0.0),
             "device_id": self.device_id
         }
 

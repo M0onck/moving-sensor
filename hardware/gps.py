@@ -86,6 +86,8 @@ class GPSWorker:
                     self._parse_rmc(line)
                 elif line.startswith('$GNGGA') or line.startswith('$GPGGA'):
                     self._parse_gga(line)
+                elif line.startswith('$GPGSV') or line.startswith('$GNGSV'):
+                    self._parse_gsv(line)
                     
             except Exception as e:
                 # 忽略偶尔的硬件字节乱码
@@ -100,11 +102,13 @@ class GPSWorker:
         status = parts[2]
         if status == 'V' or not parts[3] or not parts[5]:
             self._cache["gps_status"] = "SEARCHING"
+            self._cache["gps_state"] = "locating"  # 主动汇报：定位中
             self.data_hub.update_gps({"gps_status": "SEARCHING"})
             return
 
         try:
             self._cache["gps_status"] = "LOCKED"
+            self._cache["gps_state"] = "online"    # 主动汇报：硬件已锁定且在线
             
             lat_raw = parts[3]
             lat_dir = parts[4]
@@ -130,10 +134,32 @@ class GPSWorker:
             
         try:
             self._cache["satellites"] = int(parts[7]) if parts[7] else 0
+            self._cache["hdop"] = float(parts[8]) if len(parts) > 8 and parts[8] else 99.9
             self._cache["altitude"] = float(parts[9]) if parts[9] else 0.0
             self.data_hub.update_gps(self._cache)
         except ValueError:
             pass
+
+    def _parse_gsv(self, line):
+        """解析 GSV 获取信噪比 SNR"""
+        parts = line.split(',')
+        # NMEA GSV 格式的信噪比 SNR 位于索引 7, 11, 15, 19
+        snr_values = []
+        for i in [7, 11, 15, 19]:
+            if i < len(parts) and parts[i].strip() and parts[i] != '*':
+                try:
+                    # 去掉尾部可能附带的 *校验和 (例如 42*7E)
+                    snr_str = parts[i].split('*')[0]
+                    snr_values.append(float(snr_str))
+                except ValueError:
+                    pass
+        
+        if snr_values:
+            # 取该报文中出现卫星的平均信噪比 (类比手机信号格数)
+            avg_snr = round(sum(snr_values) / len(snr_values), 1)
+            self._cache["snr"] = avg_snr
+            # 单独推给 hub，因为 GSV 和 RMC 频率不同
+            self.data_hub.update_gps({"snr": avg_snr})
 
     def _nmea_to_decimal(self, nmea_str, direction):
         if not nmea_str:
@@ -165,7 +191,10 @@ class GPSWorker:
                 "speed_kmh": round(random.uniform(20.0, 45.0), 1),
                 "altitude": round(random.uniform(10.0, 20.0), 1),
                 "satellites": random.randint(8, 14),
-                "gps_status": "LOCKED"
+                "gps_status": "LOCKED",
+                "gps_state": "online",
+                "hdop": round(random.uniform(0.8, 1.2), 1),
+                "snr": round(random.uniform(38.0, 48.0), 1)
             }
             
             self.data_hub.update_gps(mock_payload)

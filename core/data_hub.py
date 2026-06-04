@@ -34,6 +34,9 @@ class DataHub:
             "altitude": 0.0,
             "satellites": 0,
             "gps_status": "SEARCHING",  # SEARCHING, LOCKED, ERROR
+            "gps_state": "locating",    # 主动状态断言：locating (定位中) / online (在线)
+            "hdop": 99.9,               # 水平精度因子 (HDOP)，默认给一个极差的极大值
+            "snr": 0.0,                 # 可视卫星的平均信噪比 (SNR)
             
             # 4. 设备状态与系统监控
             "battery_pct": 100.0,
